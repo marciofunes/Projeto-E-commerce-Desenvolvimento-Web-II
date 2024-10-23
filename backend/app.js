@@ -1,35 +1,48 @@
 import express from "express";
-import dotenv from "dotenv";
-import productRoutes from "./routes/products.js";
-import authRoutes from './routes/auth.js';
-import { connectDatabase } from "./config/dbConnect.js";
-import errorMiddleware from "./middleware/erros.js";
-
 const app = express();
-dotenv.config({ path: "backend/config/config.env"});
+import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+import { connectDatabase } from "./config/dbConnect.js";
+import errorMiddleware from "./middlewares/errors.js";
 
-//Conectand ao MongoDB
+// Handle Uncaught exceptions
+process.on("uncaughtException", (err) => {
+  console.log(`ERROR: ${err}`);
+  console.log("Desligando devido a expectativa não detectada");
+  process.exit(1);
+});
+
+dotenv.config({ path: "backend/config/config.env" });
+
+// Connecting to database
 connectDatabase();
 
-//Função do express que lida com json
 app.use(express.json());
+app.use(cookieParser());
 
-//Importanto todas as rotas
+// Import all routes
+import productRoutes from "./routes/products.js";
+import authRoutes from "./routes/auth.js";
+import orderRoutes from "./routes/order.js";
+
 app.use("/api/v1", productRoutes);
 app.use("/api/v1", authRoutes);
+app.use("/api/v1", orderRoutes);
 
-//Utilizando o middleware de tratamento de erros
+// Using error middleware
 app.use(errorMiddleware);
 
 const server = app.listen(process.env.PORT, () => {
-    console.log('Servidor iniciado na PORTA: 3000');
+  console.log(
+    `Server started on PORT: ${process.env.PORT} in ${process.env.NODE_ENV} mode.`
+  );
 });
 
-//Handle Unhandled Promise Rejections
-process.on('unhandledRejection', (err) => {
-    console.log(`ERRO: ${err}`);
-    console.log("Desligando servidor devido Rejeições de Promessas Não Tratadas");
-    server.close(() => {
-        process.exit(1);
-    });
+//Handle Unhandled Promise rejections
+process.on("unhandledRejection", (err) => {
+  console.log(`ERROR: ${err}`);
+  console.log("Desligando o servidor devido à rejeição de promessa não tratada");
+  server.close(() => {
+    process.exit(1);
+  });
 });

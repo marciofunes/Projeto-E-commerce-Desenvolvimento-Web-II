@@ -1,20 +1,38 @@
 import express from "express";
-import { deleteProductbyID, getProductbyID, getProducts, newProduct, updateProductbyID } from "../controllers/productControllers.js";
+import {
+  createProductReview,
+  deleteProduct,
+  deleteReview,
+  getProductDetails,
+  getProductReviews,
+  getProducts,
+  newProduct,
+  updateProduct,
+} from "../controllers/productControllers.js";
+import { authorizeRoles, isAuthenticatedUser } from "../middlewares/auth.js";
 const router = express.Router();
 
-//1 - Rota apenas para admin do sistema para cadastrar produtos
-router.route("/admin/products").post(newProduct);
-
-//2 - Rota para obter todos os produtos
 router.route("/products").get(getProducts);
+router
+  .route("/admin/products")
+  .post(isAuthenticatedUser, authorizeRoles("admin"), newProduct);
 
-//3 - Rota para obter produtos usando ID
-router.route("/products/:id").get(getProductbyID);
+router.route("/products/:id").get(getProductDetails);
 
-//4 - Rota para atualizar produtos usando ID
-router.route("/products/:id").put(updateProductbyID);
+router
+  .route("/admin/products/:id")
+  .put(isAuthenticatedUser, authorizeRoles("admin"), updateProduct);
+router
+  .route("/admin/products/:id")
+  .delete(isAuthenticatedUser, authorizeRoles("admin"), deleteProduct);
 
-//5 - Rota para deletar produtos usando ID
-router.route("/products/:id").delete(deleteProductbyID);
+router
+  .route("/reviews")
+  .get(isAuthenticatedUser, getProductReviews)
+  .put(isAuthenticatedUser, createProductReview);
+
+router
+  .route("/admin/reviews")
+  .delete(isAuthenticatedUser, authorizeRoles("admin"), deleteReview);
 
 export default router;
